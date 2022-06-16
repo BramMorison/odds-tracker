@@ -1,8 +1,8 @@
 const express = require('express')
-const { send } = require('express/lib/response')
-const res = require('express/lib/response')
 const mongoose = require('mongoose')
-const port = 3000
+const axios = require('axios')
+const dotenv = require('dotenv').config()
+const port = process.env.PORT || 3000
 
 const app = express()
 
@@ -35,6 +35,22 @@ app.get('/games', async (req, res) => {
     }
 })
 
+app.get('/apiRequest', async (req, res) => {
+    const url = 'https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey=' + process.env.ODDS_API_KEY + '&regions=us&markets=h2h,spreads&oddsFormat=american'
+    try {
+       const oddsData = await axios.get(url)
+
+       if (!oddsData) {
+           return res.status(404).send()
+       }
+
+        res.send(oddsData.data)
+
+    }catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 app.post('/users', async(req, res) => {
     const user = new User(req.body)
 
@@ -45,6 +61,18 @@ app.post('/users', async(req, res) => {
     res.status(400)/send(e)
     }
 })
+
+app.post('/games', async (req, res) => {
+    const game = new Game(req.body)
+
+    try {
+        await game.save()
+        res.status(201).send(game)
+    } catch (e) {
+        res.status(400)/send(e)
+    }
+})
+
 
 app.listen(port, () => {
     console.log('Server is up on port ' + port)
